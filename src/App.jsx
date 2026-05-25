@@ -216,10 +216,17 @@ function PostModal({ post, onClose, isDark }) {
               </div>
             </div>
 
-          ) : (
-            /* SINGLE IMAGE */
-            <img src={post.imageUrl} alt={post.headline} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          )}
+          ) : isCanvaUrl(post.imageUrl) ? (
+  /* CANVA EMBED */
+  <iframe
+    src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
+    style={{ width: "100%", height: "100%", border: "none" }}
+    allowFullScreen
+  />
+) : (
+  /* SINGLE IMAGE */
+  <img src={post.imageUrl} alt={post.headline} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+)}
 
           {/* Close button */}
           <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
