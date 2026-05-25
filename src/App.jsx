@@ -18,7 +18,7 @@ async function fetchNotionPosts() {
   const data = await res.json();
   return data.results.map((page) => ({
     id: page.id,
-    headline: page.properties.Name?.title?.[0]?.plain_text || "Untitled",
+    headline: page.properties.Title?.title?.[0]?.plain_text || "Untitled",
     status: page.properties.Status?.select?.name?.toLowerCase() || "draft",
     type: page.properties["Post Type"]?.select?.name?.toLowerCase() || "image",
     date: page.properties["Scheduled Date"]?.date?.start?.split("T")[0] || "",
@@ -32,6 +32,31 @@ async function fetchNotionPosts() {
     carouselImages: page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "",
     videoUrl: page.properties["Reel Video URL"]?.url || "",
   }));
+}
+
+function CanvaFrame({ url, scale, fullSize }) {
+  const embedUrl = url.includes("?embed") ? url : url + "?embed";
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#f0eeea" }}>
+      <iframe
+        src={embedUrl}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          width: "1080px",
+          height: "1080px",
+          transform: `translate(-50%, -50%) scale(${scale})`,
+          transformOrigin: "center center",
+          border: "none",
+          pointerEvents: fullSize ? "auto" : "none",
+        }}
+        allowFullScreen
+        loading="lazy"
+        title="Canva design"
+      />
+    </div>
+  );
 }
 
 function MediaDisplay({ post, fullSize = false }) {
@@ -65,24 +90,44 @@ function MediaDisplay({ post, fullSize = false }) {
     </div>
   );
 
-  if (isCanva) return (
-    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#fff" }}>
-      <iframe src={post.imageUrl.includes("?embed") ? post.imageUrl : post.imageUrl + "?embed"} style={{ position: "absolute", top: "50%", left: "50%", width: "1080px", height: "1080px", transform: "translate(-50%, -50%) scale(0.28)", transformOrigin: "center center", border: "none", pointerEvents: "none", filter: draftFilter }} allowFullScreen loading="lazy" title={post.headline} />
-    </div>
-  );
+  if (isCanva) return <CanvaFrame url={post.imageUrl} scale={fullSize ? 0.58 : 0.28} fullSize={fullSize} />;
 
-  return <img src={post.imageUrl} alt={post.headline} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: draftFilter }} onError={(e) => { e.target.src = `https://via.placeholder.com/400x400/6366f1/white?text=${encodeURIComponent(post.type.toUpperCase())}`; }} />;
+  return (
+    <img
+      src={post.imageUrl}
+      alt={post.headline}
+      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: draftFilter }}
+      onError={(e) => { e.target.src = `https://via.placeholder.com/400x400/6366f1/white?text=${encodeURIComponent(post.type.toUpperCase())}`; }}
+    />
+  );
 }
 
 function PostCard({ post, onClick, onDragStart, onDragOver, onDrop }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div draggable onDragStart={(e) => onDragStart(e, post.id)} onDragOver={onDragOver} onDrop={(e) => onDrop(e, post.id)} onClick={() => onClick(post)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ position: "relative", aspectRatio: "1/1", cursor: "pointer", borderRadius: 4, overflow: "hidden", border: "2px solid transparent", transition: "transform 0.15s", transform: hovered ? "scale(1.02)" : "scale(1)" }}>
-      <MediaDisplay post={post} />
-      {hovered && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 8, pointerEvents: "none" }}><p style={{ color: "#fff", fontSize: 11, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{post.headline}</p><p style={{ color: "rgba(255,255,255,0.75)", fontSize: 10, margin: 0 }}>{post.date} · {post.time}</p></div>}
-      {TYPE_ICONS[post.type] && !isCanvaUrl(post.imageUrl) && <div style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, padding: "2px 5px", borderRadius: 3 }}>{TYPE_ICONS[post.type]}</div>}
-      <div style={{ position: "absolute", bottom: 5, left: 5 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: post.status === "published" ? "#10b981" : post.status === "scheduled" ? "#3b82f6" : "#9ca3af", border: "1.5px solid rgba(255,255,255,0.8)" }} /></div>
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, post.id)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop(e, post.id)}
+      onClick={() => onClick(post)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: "relative", aspectRatio: "1/1", cursor: "pointer", borderRadius: 4, overflow: "hidden", border: "2px solid transparent", transition: "transform 0.15s", transform: hovered ? "scale(1.02)" : "scale(1)" }}
+    >
+      <MediaDisplay post={post} fullSize={false} />
+      {hovered && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 8, pointerEvents: "none" }}>
+          <p style={{ color: "#fff", fontSize: 11, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{post.headline}</p>
+          <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 10, margin: 0 }}>{post.date} · {post.time}</p>
+        </div>
+      )}
+      {TYPE_ICONS[post.type] && !isCanvaUrl(post.imageUrl) && (
+        <div style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, padding: "2px 5px", borderRadius: 3 }}>{TYPE_ICONS[post.type]}</div>
+      )}
+      <div style={{ position: "absolute", bottom: 5, left: 5 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: post.status === "published" ? "#10b981" : post.status === "scheduled" ? "#3b82f6" : "#9ca3af", border: "1.5px solid rgba(255,255,255,0.8)" }} />
+      </div>
     </div>
   );
 }
@@ -95,10 +140,10 @@ function PostModal({ post, onClose, isDark }) {
   const border = isDark ? "#3f3f46" : "#e5e7eb";
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: bg, borderRadius: 16, width: "100%", maxWidth: 640, maxHeight: "90vh", overflow: "auto" }}>
-        <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", borderRadius: "16px 16px 0 0", overflow: "hidden" }}>
-          <MediaDisplay post={post} fullSize />
-          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "#fff", fontSize: 16, cursor: "pointer" }}>✕</button>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: bg, borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto" }}>
+        <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", borderRadius: "16px 16px 0 0", overflow: "hidden", minHeight: 300 }}>
+          <MediaDisplay post={post} fullSize={true} />
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "#fff", fontSize: 16, cursor: "pointer", zIndex: 10 }}>✕</button>
         </div>
         <div style={{ padding: 24 }}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -111,7 +156,12 @@ function PostModal({ post, onClose, isDark }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
             <div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Date</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.date}</p></div>
             <div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Time</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.time}</p></div>
-            {post.status === "published" && <><div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Likes</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.likes.toLocaleString()}</p></div><div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Comments</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.comments.toLocaleString()}</p></div></>}
+            {post.status === "published" && (
+              <>
+                <div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Likes</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.likes.toLocaleString()}</p></div>
+                <div><p style={{ color: muted, fontSize: 11, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Comments</p><p style={{ color: text, fontSize: 14, fontWeight: 500, margin: 0 }}>{post.comments.toLocaleString()}</p></div>
+              </>
+            )}
           </div>
           {post.hashtags && <p style={{ color: "#6366f1", fontSize: 13, margin: "12px 0 0", lineHeight: 1.6 }}>{post.hashtags}</p>}
         </div>
@@ -122,7 +172,10 @@ function PostModal({ post, onClose, isDark }) {
 
 function AddPostModal({ onClose, onAdd, isDark }) {
   const [form, setForm] = useState({ type: "image", status: "draft", date: "", time: "12:00", headline: "", caption: "", goal: "Awareness", hashtags: "", imageUrl: "" });
-  const bg = isDark ? "#18181b" : "#ffffff"; const text = isDark ? "#f4f4f5" : "#18181b"; const border = isDark ? "#3f3f46" : "#e5e7eb"; const inputBg = isDark ? "#27272a" : "#f9fafb";
+  const bg = isDark ? "#18181b" : "#ffffff";
+  const text = isDark ? "#f4f4f5" : "#18181b";
+  const border = isDark ? "#3f3f46" : "#e5e7eb";
+  const inputBg = isDark ? "#27272a" : "#f9fafb";
   const inputStyle = { width: "100%", background: inputBg, border: `1px solid ${border}`, borderRadius: 8, padding: "8px 12px", color: text, fontSize: 14, fontFamily: "inherit", boxSizing: "border-box" };
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
@@ -158,7 +211,17 @@ function GridView({ posts, onPostClick, columns }) {
   useEffect(() => { setLocalPosts(posts); }, [posts]);
   const handleDragStart = (e, id) => { setDraggedId(id); e.dataTransfer.effectAllowed = "move"; };
   const handleDragOver = (e) => { e.preventDefault(); };
-  const handleDrop = (e, targetId) => { e.preventDefault(); if (draggedId === targetId) return; const updated = [...localPosts]; const fromIdx = updated.findIndex((p) => p.id === draggedId); const toIdx = updated.findIndex((p) => p.id === targetId); const [moved] = updated.splice(fromIdx, 1); updated.splice(toIdx, 0, moved); setLocalPosts(updated); setDraggedId(null); };
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (draggedId === targetId) return;
+    const updated = [...localPosts];
+    const fromIdx = updated.findIndex((p) => p.id === draggedId);
+    const toIdx = updated.findIndex((p) => p.id === targetId);
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    setLocalPosts(updated);
+    setDraggedId(null);
+  };
   return (
     <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 3 }}>
       {localPosts.map((post) => <PostCard key={post.id} post={post} onClick={onPostClick} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />)}
@@ -167,32 +230,84 @@ function GridView({ posts, onPostClick, columns }) {
 }
 
 function ContentPlanner({ posts, isDark }) {
-  const bg = isDark ? "#18181b" : "#ffffff"; const surface = isDark ? "#27272a" : "#f9fafb"; const text = isDark ? "#f4f4f5" : "#18181b"; const muted = isDark ? "#a1a1aa" : "#6b7280"; const border = isDark ? "#3f3f46" : "#e5e7eb";
-  const published = posts.filter((p) => p.status === "published"); const scheduled = posts.filter((p) => p.status === "scheduled");
-  const totalLikes = published.reduce((s, p) => s + p.likes, 0); const totalComments = published.reduce((s, p) => s + p.comments, 0);
+  const bg = isDark ? "#18181b" : "#ffffff";
+  const surface = isDark ? "#27272a" : "#f9fafb";
+  const text = isDark ? "#f4f4f5" : "#18181b";
+  const muted = isDark ? "#a1a1aa" : "#6b7280";
+  const border = isDark ? "#3f3f46" : "#e5e7eb";
+  const published = posts.filter((p) => p.status === "published");
+  const scheduled = posts.filter((p) => p.status === "scheduled");
+  const totalLikes = published.reduce((s, p) => s + p.likes, 0);
+  const totalComments = published.reduce((s, p) => s + p.comments, 0);
   const avgEngagement = published.length ? Math.round((totalLikes + totalComments) / published.length) : 0;
   const goalBreakdown = GOALS.slice(1).map((g) => ({ goal: g, count: posts.filter((p) => p.goal === g).length }));
   const maxGoal = Math.max(...goalBreakdown.map((g) => g.count), 1);
   const typeBreakdown = TYPES.slice(1).map((t) => ({ type: t, count: posts.filter((p) => p.type === t).length }));
   const upcoming = [...scheduled].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 5);
-  const statCard = (label, value, sub) => (<div style={{ background: surface, borderRadius: 12, padding: "16px 20px" }}><p style={{ color: muted, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>{label}</p><p style={{ color: text, fontSize: 26, fontWeight: 700, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{value}</p>{sub && <p style={{ color: muted, fontSize: 12, margin: 0 }}>{sub}</p>}</div>);
+  const statCard = (label, value, sub) => (
+    <div style={{ background: surface, borderRadius: 12, padding: "16px 20px" }}>
+      <p style={{ color: muted, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>{label}</p>
+      <p style={{ color: text, fontSize: 26, fontWeight: 700, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{value}</p>
+      {sub && <p style={{ color: muted, fontSize: 12, margin: 0 }}>{sub}</p>}
+    </div>
+  );
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>{statCard("Total posts", posts.length, "in database")}{statCard("Scheduled", scheduled.length, "ready to go")}{statCard("Avg. engagement", avgEngagement.toLocaleString(), "per published post")}{statCard("Total likes", totalLikes.toLocaleString(), `${totalComments.toLocaleString()} comments`)}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {statCard("Total posts", posts.length, "in database")}
+        {statCard("Scheduled", scheduled.length, "ready to go")}
+        {statCard("Avg. engagement", avgEngagement.toLocaleString(), "per published post")}
+        {statCard("Total likes", totalLikes.toLocaleString(), `${totalComments.toLocaleString()} comments`)}
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: 20 }}>
           <h4 style={{ color: text, fontSize: 14, fontWeight: 600, margin: "0 0 16px" }}>Goal distribution</h4>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{goalBreakdown.map(({ goal, count }) => (<div key={goal}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 13, color: text }}>{goal}</span><span style={{ fontSize: 13, color: muted, fontWeight: 600 }}>{count}</span></div><div style={{ height: 6, background: isDark ? "#3f3f46" : "#e5e7eb", borderRadius: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${(count / maxGoal) * 100}%`, background: GOAL_COLORS[goal]?.text || "#6366f1", borderRadius: 4, transition: "width 0.4s" }} /></div></div>))}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {goalBreakdown.map(({ goal, count }) => (
+              <div key={goal}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 13, color: text }}>{goal}</span><span style={{ fontSize: 13, color: muted, fontWeight: 600 }}>{count}</span></div>
+                <div style={{ height: 6, background: isDark ? "#3f3f46" : "#e5e7eb", borderRadius: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${(count / maxGoal) * 100}%`, background: GOAL_COLORS[goal]?.text || "#6366f1", borderRadius: 4, transition: "width 0.4s" }} /></div>
+              </div>
+            ))}
+          </div>
         </div>
         <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: 20 }}>
           <h4 style={{ color: text, fontSize: 14, fontWeight: 600, margin: "0 0 16px" }}>Content mix</h4>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{typeBreakdown.map(({ type, count }) => (<div key={type} style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 32, height: 32, background: type === "reel" ? "#fee2e2" : type === "carousel" ? "#ede9fe" : "#dbeafe", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{type === "reel" ? "▶" : type === "carousel" ? "⊞" : "◻"}</div><div style={{ flex: 1 }}><div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 13, color: text, textTransform: "capitalize" }}>{type}s</span><span style={{ fontSize: 13, fontWeight: 600, color: text }}>{count} posts</span></div><div style={{ fontSize: 11, color: muted }}>{posts.length ? Math.round((count / posts.length) * 100) : 0}% of feed</div></div></div>))}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {typeBreakdown.map(({ type, count }) => (
+              <div key={type} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 32, height: 32, background: type === "reel" ? "#fee2e2" : type === "carousel" ? "#ede9fe" : "#dbeafe", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{type === "reel" ? "▶" : type === "carousel" ? "⊞" : "◻"}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 13, color: text, textTransform: "capitalize" }}>{type}s</span><span style={{ fontSize: 13, fontWeight: 600, color: text }}>{count} posts</span></div>
+                  <div style={{ fontSize: 11, color: muted }}>{posts.length ? Math.round((count / posts.length) * 100) : 0}% of feed</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: 20 }}>
         <h4 style={{ color: text, fontSize: 14, fontWeight: 600, margin: "0 0 16px" }}>Upcoming posts</h4>
         {upcoming.length === 0 ? <p style={{ color: muted, fontSize: 13 }}>No scheduled posts yet.</p> : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>{upcoming.map((post, i) => (<div key={post.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < upcoming.length - 1 ? `1px solid ${border}` : "none" }}><div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0, position: "relative", background: "#e5e7eb" }}>{isCanvaUrl(post.imageUrl) ? <iframe src={post.imageUrl.includes("?embed") ? post.imageUrl : post.imageUrl + "?embed"} style={{ position: "absolute", top: "50%", left: "50%", width: "400px", height: "400px", transform: "translate(-50%,-50%) scale(0.1)", transformOrigin: "center center", border: "none", pointerEvents: "none" }} title={post.headline} /> : <img src={post.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} />}</div><div style={{ flex: 1, minWidth: 0 }}><p style={{ color: text, fontSize: 13, fontWeight: 500, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{post.headline}</p><p style={{ color: muted, fontSize: 12, margin: 0 }}>{post.date} at {post.time}</p></div><div style={{ display: "flex", gap: 6, flexShrink: 0 }}><Badge label={post.type} colors={{ bg: isDark ? "#27272a" : "#f3f4f6", text: isDark ? "#d4d4d8" : "#374151" }} />{post.goal && <Badge label={post.goal} colors={GOAL_COLORS[post.goal] || { bg: "#f3f4f6", text: "#374151" }} />}</div></div>))}</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {upcoming.map((post, i) => (
+              <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < upcoming.length - 1 ? `1px solid ${border}` : "none" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0, position: "relative", background: "#e5e7eb" }}>
+                  {isCanvaUrl(post.imageUrl)
+                    ? <CanvaFrame url={post.imageUrl} scale={0.037} fullSize={false} />
+                    : <img src={post.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: text, fontSize: 13, fontWeight: 500, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{post.headline}</p>
+                  <p style={{ color: muted, fontSize: 12, margin: 0 }}>{post.date} at {post.time}</p>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  <Badge label={post.type} colors={{ bg: isDark ? "#27272a" : "#f3f4f6", text: isDark ? "#d4d4d8" : "#374151" }} />
+                  {post.goal && <Badge label={post.goal} colors={GOAL_COLORS[post.goal] || { bg: "#f3f4f6", text: "#374151" }} />}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -211,10 +326,25 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchNotionPosts().then((data) => { setPosts(data); setLoading(false); }).catch((err) => { console.error(err); setLoading(false); }); }, []);
+  useEffect(() => {
+    fetchNotionPosts()
+      .then((data) => { setPosts(data); setLoading(false); })
+      .catch((err) => { console.error(err); setLoading(false); });
+  }, []);
 
-  const bg = isDark ? "#09090b" : "#f8f8f8"; const surface = isDark ? "#18181b" : "#ffffff"; const text = isDark ? "#f4f4f5" : "#18181b"; const muted = isDark ? "#a1a1aa" : "#6b7280"; const border = isDark ? "#3f3f46" : "#e5e7eb";
-  const filteredPosts = posts.filter((p) => { if (filterGoal !== "All" && p.goal !== filterGoal) return false; if (filterType !== "All" && p.type !== filterType) return false; if (filterStatus !== "All" && p.status !== filterStatus) return false; return true; });
+  const bg = isDark ? "#09090b" : "#f8f8f8";
+  const surface = isDark ? "#18181b" : "#ffffff";
+  const text = isDark ? "#f4f4f5" : "#18181b";
+  const muted = isDark ? "#a1a1aa" : "#6b7280";
+  const border = isDark ? "#3f3f46" : "#e5e7eb";
+
+  const filteredPosts = posts.filter((p) => {
+    if (filterGoal !== "All" && p.goal !== filterGoal) return false;
+    if (filterType !== "All" && p.type !== filterType) return false;
+    if (filterStatus !== "All" && p.status !== filterStatus) return false;
+    return true;
+  });
+
   const tabStyle = (active) => ({ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: active ? (isDark ? "#27272a" : "#fff") : "transparent", color: active ? text : muted, boxShadow: active ? (isDark ? "0 1px 3px rgba(0,0,0,0.4)" : "0 1px 3px rgba(0,0,0,0.08)") : "none", transition: "all 0.15s" });
   const selectStyle = { background: isDark ? "#27272a" : "#fff", border: `1px solid ${border}`, borderRadius: 8, padding: "6px 10px", color: text, fontSize: 12, fontFamily: "inherit", cursor: "pointer" };
 
@@ -224,7 +354,9 @@ export default function App() {
         <div style={{ background: surface, borderBottom: `1px solid ${border}`, padding: "0 20px", position: "sticky", top: 0, zIndex: 50 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 28, height: 28, background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 12, height: 12, border: "2px solid #fff", borderRadius: "50%" }} /></div>
+              <div style={{ width: 28, height: 28, background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 12, height: 12, border: "2px solid #fff", borderRadius: "50%" }} />
+              </div>
               <span style={{ fontSize: 15, fontWeight: 700, color: text, letterSpacing: "-0.01em" }}>IG Grid Planner</span>
               <span style={{ background: "#6366f1", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>NOTION</span>
             </div>
@@ -245,18 +377,31 @@ export default function App() {
                 <select style={selectStyle} value={filterGoal} onChange={(e) => setFilterGoal(e.target.value)}>{GOALS.map((g) => <option key={g} value={g}>{g === "All" ? "All goals" : g}</option>)}</select>
                 <select style={selectStyle} value={filterType} onChange={(e) => setFilterType(e.target.value)}>{TYPES.map((t) => <option key={t} value={t}>{t === "All" ? "All types" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}</select>
                 <div style={{ flex: 1 }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ fontSize: 12, color: muted }}>Columns:</span>{[3, 4, 5].map((c) => <button key={c} onClick={() => setColumns(c)} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${columns === c ? "#6366f1" : border}`, background: columns === c ? "#6366f1" : "transparent", color: columns === c ? "#fff" : muted, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{c}</button>)}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, color: muted }}>Columns:</span>
+                  {[3, 4, 5].map((c) => <button key={c} onClick={() => setColumns(c)} style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${columns === c ? "#6366f1" : border}`, background: columns === c ? "#6366f1" : "transparent", color: columns === c ? "#fff" : muted, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{c}</button>)}
+                </div>
                 <button onClick={() => setShowAddModal(true)} style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>+ Add post</button>
               </div>
               <div style={{ display: "flex", gap: 16, marginBottom: 14, flexWrap: "wrap" }}>
-                {[{ label: "Published", color: "#10b981" }, { label: "Scheduled", color: "#3b82f6" }, { label: "Draft", color: "#9ca3af" }].map(({ label, color }) => (<div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} /><span style={{ fontSize: 12, color: muted }}>{label}</span></div>))}
-                <span style={{ fontSize: 12, color: muted }}>▶ Reel</span><span style={{ fontSize: 12, color: muted }}>⊞ Carousel</span>
-                <div style={{ flex: 1 }} /><span style={{ fontSize: 12, color: muted }}>{filteredPosts.length} posts · Drag to rearrange</span>
+                {[{ label: "Published", color: "#10b981" }, { label: "Scheduled", color: "#3b82f6" }, { label: "Draft", color: "#9ca3af" }].map(({ label, color }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} /><span style={{ fontSize: 12, color: muted }}>{label}</span></div>
+                ))}
+                <span style={{ fontSize: 12, color: muted }}>▶ Reel</span>
+                <span style={{ fontSize: 12, color: muted }}>⊞ Carousel</span>
+                <div style={{ flex: 1 }} />
+                <span style={{ fontSize: 12, color: muted }}>{filteredPosts.length} posts · Drag to rearrange</span>
               </div>
               <div style={{ background: surface, borderRadius: 16, padding: 3, border: `1px solid ${border}` }}>
-                {loading ? <div style={{ padding: 60, textAlign: "center", color: muted, fontSize: 14 }}>Loading your posts…</div> : filteredPosts.length === 0 ? <div style={{ padding: 60, textAlign: "center", color: muted, fontSize: 14 }}>No posts match your filters.</div> : <GridView posts={filteredPosts} onPostClick={setSelectedPost} columns={columns} />}
+                {loading
+                  ? <div style={{ padding: 60, textAlign: "center", color: muted, fontSize: 14 }}>Loading your posts…</div>
+                  : filteredPosts.length === 0
+                    ? <div style={{ padding: 60, textAlign: "center", color: muted, fontSize: 14 }}>No posts match your filters.</div>
+                    : <GridView posts={filteredPosts} onPostClick={setSelectedPost} columns={columns} />}
               </div>
-              <div style={{ marginTop: 12, textAlign: "center" }}><span style={{ fontSize: 12, color: muted }}>Showing feed as it appears on desktop · Hover to preview · Click to expand</span></div>
+              <div style={{ marginTop: 12, textAlign: "center" }}>
+                <span style={{ fontSize: 12, color: muted }}>Showing feed as it appears on desktop · Hover to preview · Click to expand</span>
+              </div>
             </>
           )}
           {activeTab === "planner" && <ContentPlanner posts={posts} isDark={isDark} />}
