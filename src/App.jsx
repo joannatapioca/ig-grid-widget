@@ -79,11 +79,11 @@ function PostCard({ post, onClick, isDark, isSelected, onDragStart, onDragOver, 
     >
       {isCanvaUrl(post.imageUrl) ? (
   <iframe
-    src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
-    style={{ width: "100%", height: "100%", border: "none", display: "block", pointerEvents: "none", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
-    allowFullScreen
-    loading="lazy"
-  />
+  src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
+  style={{ position: "absolute", top: "-2px", left: "-2px", width: "calc(100% + 4px)", height: "calc(100% + 4px)", border: "none", display: "block", pointerEvents: "none", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
+  allowFullScreen
+  loading="lazy"
+/>
 ) : (
   <img
     src={post.imageUrl}
