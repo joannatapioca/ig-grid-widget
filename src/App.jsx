@@ -359,8 +359,11 @@ export default function App() {
   const [filterGoal, setFilterGoal] = useState("All");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [posts, setPosts] = useState(MOCK_POSTS);
+  const [posts, setPosts] = useState([]);
 
+useEffect(() => {
+  fetchNotionPosts().then(setPosts).catch(console.error)
+}, [])
 useEffect(() => {
   fetchNotionPosts().then(setPosts).catch(console.error)
 }, [])
