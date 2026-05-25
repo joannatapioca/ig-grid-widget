@@ -40,6 +40,9 @@ const GOAL_COLORS = {
   Community: { bg: "#d1fae5", text: "#065f46" },
 };
 
+function isCanvaUrl(url) {
+  return url && url.includes('canva.com');
+}
 const TYPE_ICONS = {
   reel: "▶",
   carousel: "⊞",
