@@ -360,6 +360,10 @@ export default function App() {
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
   const [posts, setPosts] = useState(MOCK_POSTS);
+
+useEffect(() => {
+  fetchNotionPosts().then(setPosts).catch(console.error)
+}, [])
   const [selectedPost, setSelectedPost] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
