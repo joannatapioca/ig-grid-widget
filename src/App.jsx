@@ -37,16 +37,16 @@ async function fetchNotionPosts() {
 function CanvaFrame({ url, scale, fullSize }) {
   const embedUrl = url.includes("?embed") ? url : url + "?embed";
   return (
-    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#f0eeea" }}>
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#fff" }}>
       <iframe
         src={embedUrl}
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
-          width: "1080px",
-          height: "1080px",
-          transform: `translate(-50%, -50%) scale(${scale})`,
+          width: "1200px",
+          height: "1200px",
+          transform: `translate(-50%, -52%) scale(${scale})`,
           transformOrigin: "center center",
           border: "none",
           pointerEvents: fullSize ? "auto" : "none",
