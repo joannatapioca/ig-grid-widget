@@ -46,7 +46,7 @@ function CanvaFrame({ url, scale, fullSize }) {
           left: "50%",
           width: "1200px",
           height: "1200px",
-          transform: `translate(-50%, -52%) scale(${scale})`,
+          transform: `translate(-50%, -38%) scale(${scale})`,
           transformOrigin: "center center",
           border: "none",
           pointerEvents: fullSize ? "auto" : "none",
