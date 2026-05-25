@@ -1,19 +1,25 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
-const MOCK_POSTS = [
-  { id: "p1", type: "reel", status: "scheduled", date: "2025-06-02", time: "09:00", headline: "5 Morning Routines That Changed My Life", caption: "Your mornings set the tone for everything. Here's what I changed.", cover: null, goal: "Awareness", hashtags: "#morningroutine #productivity", imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p2", type: "carousel", status: "scheduled", date: "2025-06-03", time: "12:00", headline: "Brand Color Psychology 101", caption: "Colors tell your story before you say a word.", cover: null, goal: "Education", hashtags: "#branding #design", imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p3", type: "image", status: "published", date: "2025-05-28", time: "18:00", headline: "Behind the Scenes Studio Shot", caption: "This is where the magic happens.", cover: null, goal: "Community", hashtags: "#behindthescenes #studio", imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop", likes: 2847, comments: 134 },
-  { id: "p4", type: "image", status: "published", date: "2025-05-26", time: "10:00", headline: "Client Win: 300% Revenue Growth", caption: "Case study drop in comments.", cover: null, goal: "Conversion", hashtags: "#casestudy #results", imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop", likes: 5120, comments: 287 },
-  { id: "p5", type: "reel", status: "scheduled", date: "2025-06-05", time: "17:00", headline: "Day in My Life as a Creative Director", caption: "Raw, unfiltered, chaotic. Just like creativity.", cover: null, goal: "Awareness", hashtags: "#dayinmylife #creative", imageUrl: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p6", type: "carousel", status: "draft", date: "2025-06-07", time: "11:00", headline: "The Notion System That Runs My Business", caption: "I get asked about this constantly. Here's everything.", cover: null, goal: "Education", hashtags: "#notion #productivity", imageUrl: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p7", type: "image", status: "published", date: "2025-05-24", time: "09:00", headline: "Minimal Desk Setup Reveal", caption: "Less clutter, more clarity.", cover: null, goal: "Community", hashtags: "#desksetup #minimal", imageUrl: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=400&fit=crop", likes: 3940, comments: 218 },
-  { id: "p8", type: "reel", status: "scheduled", date: "2025-06-09", time: "18:00", headline: "How I Plan a Month of Content in 2 Hours", caption: "The exact process, step by step.", cover: null, goal: "Education", hashtags: "#contentplanning #notion", imageUrl: "https://images.unsplash.com/photo-1611532736569-b2c8c6e1e88e?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p9", type: "image", status: "published", date: "2025-05-22", time: "12:00", headline: "Coffee & Strategy Morning", caption: "Every great campaign started with a good espresso.", cover: null, goal: "Community", hashtags: "#coffee #morningvibes", imageUrl: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&h=400&fit=crop", likes: 1876, comments: 92 },
-  { id: "p10", type: "carousel", status: "scheduled", date: "2025-06-11", time: "09:00", headline: "10 Canva Hacks Nobody Talks About", caption: "Bookmark this. You'll thank me later.", cover: null, goal: "Education", hashtags: "#canva #design", imageUrl: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-  { id: "p11", type: "image", status: "published", date: "2025-05-20", time: "18:00", headline: "New Brand Identity Launch", caption: "Say hello to the new look. Link in bio.", cover: null, goal: "Conversion", hashtags: "#branding #launch", imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80", likes: 6230, comments: 401 },
-  { id: "p12", type: "reel", status: "scheduled", date: "2025-06-13", time: "17:00", headline: "Productivity Hacks That Actually Work", caption: "Stop doing more. Start doing right.", cover: null, goal: "Awareness", hashtags: "#productivity #habits", imageUrl: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&h=400&fit=crop", likes: 0, comments: 0 },
-];
+const MOCK_POSTS = []
+
+async function fetchNotionPosts() {
+  const res = await fetch('/api/notion', { method: 'POST' })
+  const data = await res.json()
+  return data.results.map(page => ({
+    id: page.id,
+    headline: page.properties.Title?.title?.[0]?.plain_text || 'Untitled',
+    status: page.properties.Status?.select?.name?.toLowerCase() || 'draft',
+    type: page.properties['Post Type']?.select?.name?.toLowerCase() || 'image',
+    date: page.properties['Scheduled Date']?.date?.start?.split('T')[0] || '',
+    time: page.properties['Scheduled Date']?.date?.start?.split('T')[1]?.slice(0,5) || '12:00',
+    caption: page.properties.Caption?.rich_text?.[0]?.plain_text || '',
+    hashtags: page.properties.Hashtags?.rich_text?.[0]?.plain_text || '',
+    goal: page.properties.Goal?.select?.name || '',
+    imageUrl: page.properties['Image URL']?.url || '',
+    likes: page.properties.Likes?.number || 0,
+    comments: page.properties.Comments?.number || 0,
+  }))
+}
 
 const GOALS = ["All", "Awareness", "Education", "Conversion", "Community"];
 const TYPES = ["All", "image", "reel", "carousel"];
