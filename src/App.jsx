@@ -90,7 +90,7 @@ function MediaDisplay({ post, fullSize = false }) {
     </div>
   );
 
-  if (isCanva) return <CanvaFrame url={post.imageUrl} scale={fullSize ? 0.58 : 0.28} fullSize={fullSize} />;
+  if (isCanva) return <CanvaFrame url={post.imageUrl} scale={fullSize ? 0.52 : 0.25} fullSize={fullSize} />;
 
   return (
     <img
