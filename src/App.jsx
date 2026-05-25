@@ -77,12 +77,21 @@ function PostCard({ post, onClick, isDark, isSelected, onDragStart, onDragOver, 
         boxShadow: hovered ? "0 4px 20px rgba(0,0,0,0.15)" : "none",
       }}
     >
-      <img
-        src={post.imageUrl}
-        alt={post.headline}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
-        onError={(e) => { e.target.src = `https://via.placeholder.com/400x400/6366f1/white?text=${encodeURIComponent(post.type.toUpperCase())}`; }}
-      />
+      {isCanvaUrl(post.imageUrl) ? (
+  <iframe
+    src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
+    style={{ width: "100%", height: "100%", border: "none", display: "block", pointerEvents: "none", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
+    allowFullScreen
+    loading="lazy"
+  />
+) : (
+  <img
+    src={post.imageUrl}
+    alt={post.headline}
+    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
+    onError={(e) => { e.target.src = `https://via.placeholder.com/400x400/6366f1/white?text=${encodeURIComponent(post.type.toUpperCase())}`; }}
+  />
+)}
       {hovered && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 8 }}>
           <p style={{ color: "#fff", fontSize: 11, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{post.headline}</p>
