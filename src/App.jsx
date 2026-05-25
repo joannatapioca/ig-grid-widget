@@ -97,24 +97,128 @@ function PostCard({ post, onClick, isDark, isSelected, onDragStart, onDragOver, 
 }
 
 function PostModal({ post, onClose, isDark }) {
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const videoRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+
   if (!post) return null;
+
   const bg = isDark ? "#18181b" : "#ffffff";
   const text = isDark ? "#f4f4f5" : "#18181b";
   const muted = isDark ? "#a1a1aa" : "#6b7280";
   const border = isDark ? "#3f3f46" : "#e5e7eb";
 
+  const carouselImages = post.carouselImages
+    ? post.carouselImages.split(',').map(s => s.trim()).filter(Boolean)
+    : [post.imageUrl];
+
+  const isCarousel = post.type === 'carousel' && carouselImages.length > 1;
+  const isReel = post.type === 'reel' && post.videoUrl;
+
+  const prevSlide = (e) => {
+    e.stopPropagation();
+    setCarouselIndex(i => (i - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  const nextSlide = (e) => {
+    e.stopPropagation();
+    setCarouselIndex(i => (i + 1) % carouselImages.length);
+  };
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (playing) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play();
+    }
+    setPlaying(!playing);
+  };
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: bg, borderRadius: 16, width: "100%", maxWidth: 640, maxHeight: "90vh", overflow: "auto", display: "flex", flexDirection: "column" }}>
-        <img src={post.imageUrl} alt={post.headline} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", borderRadius: "16px 16px 0 0" }} onError={(e) => { e.target.src = `https://via.placeholder.com/640x640/6366f1/white?text=POST`; }} />
-        <div style={{ padding: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Badge label={post.status} colors={STATUS_COLORS[post.status]} />
-              <Badge label={post.type} colors={{ bg: isDark ? "#27272a" : "#f3f4f6", text: isDark ? "#d4d4d8" : "#374151" }} />
-              {post.goal && <Badge label={post.goal} colors={GOAL_COLORS[post.goal] || { bg: "#f3f4f6", text: "#374151" }} />}
+
+        {/* Media area */}
+        <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "#000", borderRadius: "16px 16px 0 0", overflow: "hidden" }}>
+
+          {/* REEL - video player */}
+          {isReel ? (
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <video
+                ref={videoRef}
+                src={post.videoUrl}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                loop
+                playsInline
+                onEnded={() => setPlaying(false)}
+              />
+              {/* Play/pause overlay */}
+              <div
+                onClick={togglePlay}
+                style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: playing ? "transparent" : "rgba(0,0,0,0.3)" }}
+              >
+                {!playing && (
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 24, marginLeft: 4 }}>▶</span>
+                  </div>
+                )}
+              </div>
+              {/* Reel label */}
+              <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
+                ▶ REEL
+              </div>
             </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: muted, fontSize: 20, lineHeight: 1 }}>✕</button>
+
+          ) : isCarousel ? (
+            /* CAROUSEL - swipeable images */
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <img
+                src={carouselImages[carouselIndex]}
+                alt={`Slide ${carouselIndex + 1}`}
+                style={{ width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.2s" }}
+              />
+              {/* Left arrow */}
+              {carouselIndex > 0 && (
+                <button onClick={prevSlide} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  ‹
+                </button>
+              )}
+              {/* Right arrow */}
+              {carouselIndex < carouselImages.length - 1 && (
+                <button onClick={nextSlide} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.9)", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  ›
+                </button>
+              )}
+              {/* Dots */}
+              <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+                {carouselImages.map((_, i) => (
+                  <div key={i} onClick={(e) => { e.stopPropagation(); setCarouselIndex(i); }} style={{ width: i === carouselIndex ? 20 : 8, height: 8, borderRadius: 4, background: i === carouselIndex ? "#fff" : "rgba(255,255,255,0.5)", cursor: "pointer", transition: "all 0.2s" }} />
+                ))}
+              </div>
+              {/* Carousel label */}
+              <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
+                ⊞ {carouselIndex + 1} / {carouselImages.length}
+              </div>
+            </div>
+
+          ) : (
+            /* SINGLE IMAGE */
+            <img src={post.imageUrl} alt={post.headline} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          )}
+
+          {/* Close button */}
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            ✕
+          </button>
+        </div>
+
+        {/* Post details */}
+        <div style={{ padding: 24 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <Badge label={post.status} colors={STATUS_COLORS[post.status]} />
+            <Badge label={post.type} colors={{ bg: isDark ? "#27272a" : "#f3f4f6", text: isDark ? "#d4d4d8" : "#374151" }} />
+            {post.goal && <Badge label={post.goal} colors={GOAL_COLORS[post.goal] || { bg: "#f3f4f6", text: "#374151" }} />}
           </div>
           <h3 style={{ color: text, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>{post.headline}</h3>
           <p style={{ color: muted, fontSize: 14, margin: "0 0 16px", lineHeight: 1.6 }}>{post.caption}</p>
