@@ -78,12 +78,25 @@ function PostCard({ post, onClick, isDark, isSelected, onDragStart, onDragOver, 
       }}
     >
       {isCanvaUrl(post.imageUrl) ? (
+ <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
   <iframe
-  src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
-  style={{ position: "absolute", top: "-2px", left: "-2px", width: "calc(100% + 4px)", height: "calc(100% + 4px)", border: "none", display: "block", pointerEvents: "none", filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none" }}
-  allowFullScreen
-  loading="lazy"
-/>
+    src={post.imageUrl.includes('?embed') ? post.imageUrl : post.imageUrl + '?embed'}
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      width: "800px",
+      height: "800px",
+      transform: "translate(-50%, -50%) scale(0.375)",
+      transformOrigin: "center center",
+      border: "none",
+      pointerEvents: "none",
+      filter: post.status === "draft" ? "grayscale(60%) opacity(0.7)" : "none"
+    }}
+    allowFullScreen
+    loading="lazy"
+  />
+</div>
 ) : (
   <img
     src={post.imageUrl}
