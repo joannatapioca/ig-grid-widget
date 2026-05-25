@@ -41,15 +41,15 @@ function CanvaFrame({ url, scale, fullSize }) {
       <iframe
         src={embedUrl}
         style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          width: "1200px",
-          height: "1200px",
-          transform: `translate(-50%, -38%) scale(${scale})`,
-          transformOrigin: "center center",
-          border: "none",
-          pointerEvents: fullSize ? "auto" : "none",
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        width: "1080px",
+        height: "1080px",
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        transformOrigin: "center center",
+        border: "none",
+        pointerEvents: fullSize ? "auto" : "none",
         }}
         allowFullScreen
         loading="lazy"
