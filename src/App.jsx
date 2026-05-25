@@ -18,6 +18,8 @@ async function fetchNotionPosts() {
     imageUrl: page.properties['Image URL']?.url || '',
     likes: page.properties.Likes?.number || 0,
     comments: page.properties.Comments?.number || 0,
+    carouselImages: page.properties['Carousel Images']?.rich_text?.[0]?.plain_text || '',
+    videoUrl: page.properties['Reel Video URL']?.url || '',
   }))
 }
 
