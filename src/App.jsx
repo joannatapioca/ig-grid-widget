@@ -52,10 +52,10 @@ function Badge({ label, colors }) {
 async function fetchNotionPosts() {
   const res = await fetch("/api/notion", { method: "POST" });
   const data = await res.json();
-  return data.results.map((page) => ({
+  const mapped = data.results.map((page) => ({
     id: page.id,
     headline: page.properties.Title?.title?.[0]?.plain_text || "Untitled",
-    status: page.properties.Status?.select?.name?.trim()?.toLowerCase() || "draft",
+    status: (page.properties.Status?.select?.name || page.properties.Status?.status?.name || "draft").trim().toLowerCase(),
     type: page.properties["Post Type"]?.select?.name?.trim()?.toLowerCase() || "image",
     date: page.properties["Scheduled Date"]?.date?.start?.split("T")[0] || "",
     time: page.properties["Scheduled Date"]?.date?.start?.split("T")[1]?.slice(0, 5) || "12:00",
@@ -68,6 +68,8 @@ async function fetchNotionPosts() {
     carouselImages: page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "",
     videoUrl: page.properties["Reel Video URL"]?.url || "",
   }));
+  console.log("POSTS DEBUG:", mapped.map(p => ({ title: p.headline, status: p.status, date: p.date })));
+  return mapped;
 }
 
 function CanvaFrame({ url, scale, fullSize }) {
