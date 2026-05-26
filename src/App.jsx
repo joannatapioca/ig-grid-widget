@@ -266,7 +266,7 @@ function ContentPlanner({ posts }) {
   const goalBreakdown = GOALS.slice(1).map((g) => ({ goal: g, count: posts.filter((p) => p.goal === g).length }));
   const maxGoal = Math.max(...goalBreakdown.map((g) => g.count), 1);
   const typeBreakdown = TYPES.slice(1).map((t) => ({ type: t, count: posts.filter((p) => p.type === t).length }));
-  const upcoming = [...scheduled].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 5);
+  const upcoming = [...scheduled].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 8);
 
   const statCard = (label, value, sub) => (
     <div style={{ background: BRAND.accent, borderRadius: 10, padding: "14px 16px", border: `0.5px solid ${BRAND.border}` }}>
