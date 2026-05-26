@@ -52,10 +52,10 @@ function Badge({ label, colors }) {
 async function fetchNotionPosts() {
   const res = await fetch("/api/notion", { method: "POST" });
   const data = await res.json();
-  const mapped = data.results.map((page) => ({
+  return data.results.map((page) => ({
     id: page.id,
     headline: page.properties.Title?.title?.[0]?.plain_text || "Untitled",
-    status: (page.properties.Status?.select?.name || page.properties.Status?.status?.name || "draft").trim().toLowerCase(),
+    status: page.properties.Status?.select?.name?.trim()?.toLowerCase() || "draft",
     type: page.properties["Post Type"]?.select?.name?.trim()?.toLowerCase() || "image",
     date: page.properties["Scheduled Date"]?.date?.start?.split("T")[0] || "",
     time: page.properties["Scheduled Date"]?.date?.start?.split("T")[1]?.slice(0, 5) || "12:00",
@@ -68,8 +68,6 @@ async function fetchNotionPosts() {
     carouselImages: page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "",
     videoUrl: page.properties["Reel Video URL"]?.url || "",
   }));
-  console.log("POSTS DEBUG:", mapped.map(p => ({ title: p.headline, status: p.status, date: p.date })));
-  return mapped;
 }
 
 function CanvaFrame({ url, scale, fullSize }) {
@@ -268,7 +266,6 @@ function ContentPlanner({ posts }) {
   const goalBreakdown = GOALS.slice(1).map((g) => ({ goal: g, count: posts.filter((p) => p.goal === g).length }));
   const maxGoal = Math.max(...goalBreakdown.map((g) => g.count), 1);
   const typeBreakdown = TYPES.slice(1).map((t) => ({ type: t, count: posts.filter((p) => p.type === t).length }));
-  const upcoming = [...scheduled].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 8);
 
   const statCard = (label, value, sub) => (
     <div style={{ background: BRAND.accent, borderRadius: 10, padding: "14px 16px", border: `0.5px solid ${BRAND.border}` }}>
@@ -323,30 +320,7 @@ function ContentPlanner({ posts }) {
           </div>
         </div>
       </div>
-      <div style={{ background: BRAND.card, border: `0.5px solid ${BRAND.border}`, borderRadius: 12, padding: 18 }}>
-        <h4 style={{ color: BRAND.text, fontSize: 12, fontWeight: 600, margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: BRAND.font }}>Upcoming posts</h4>
-        {upcoming.length === 0 ? <p style={{ color: BRAND.muted, fontSize: 12, fontFamily: BRAND.font }}>No scheduled posts yet.</p> : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {upcoming.map((post, i) => (
-              <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: i < upcoming.length - 1 ? `0.5px solid ${BRAND.border}` : "none" }}>
-                <div style={{ width: 38, height: 38, borderRadius: 6, overflow: "hidden", flexShrink: 0, position: "relative", background: BRAND.accent, border: `0.5px solid ${BRAND.border}` }}>
-                  {isCanvaUrl(post.imageUrl)
-                    ? <CanvaFrame url={post.imageUrl} scale={0.035} fullSize={false} />
-                    : <img src={post.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} />}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: BRAND.text, fontSize: 12, fontWeight: 500, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: BRAND.font }}>{post.headline}</p>
-                  <p style={{ color: BRAND.muted, fontSize: 11, margin: 0, fontFamily: BRAND.font }}>{post.date} at {post.time}</p>
-                </div>
-                <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                  <Badge label={post.type} colors={{ bg: BRAND.accentDark, text: BRAND.muted }} />
-                  {post.goal && <Badge label={post.goal} colors={GOAL_COLORS[post.goal] || { bg: BRAND.accentDark, text: BRAND.muted }} />}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
