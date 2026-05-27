@@ -17,28 +17,5 @@ export default async function handler(req, res) {
     }
   )
   const data = await response.json()
-
-  // Normalize status field — works for both Select and Status property types
-  const normalized = {
-    ...data,
-    results: data.results.map(page => {
-      const statusProp = page.properties.Status
-      const statusName =
-        statusProp?.select?.name ||
-        statusProp?.status?.name ||
-        "Draft"
-      return {
-        ...page,
-        properties: {
-          ...page.properties,
-          Status: {
-            ...statusProp,
-            select: { name: statusName }
-          }
-        }
-      }
-    })
-  }
-
-  res.status(200).json(normalized)
+  res.status(200).json(data)
 }
