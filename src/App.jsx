@@ -203,40 +203,6 @@ function PostModal({ post, onClose }) {
   );
 }
 
-function AddPostModal({ onClose, onAdd }) {
-  const [form, setForm] = useState({ type: "image", status: "draft", date: "", time: "12:00", headline: "", caption: "", goal: "Relatability", hashtags: "", imageUrl: "" });
-  const inputStyle = { width: "100%", background: BRAND.accent, border: `0.5px solid ${BRAND.border}`, borderRadius: 6, padding: "8px 10px", color: BRAND.text, fontSize: 13, fontFamily: BRAND.font, boxSizing: "border-box" };
-  const labelStyle = { color: BRAND.muted, fontSize: 11, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: BRAND.font };
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(44,40,37,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: BRAND.card, borderRadius: 14, width: "100%", maxWidth: 480, maxHeight: "90vh", overflow: "auto", padding: 24, border: `0.5px solid ${BRAND.border}`, fontFamily: BRAND.font }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <h3 style={{ color: BRAND.text, fontSize: 15, fontWeight: 600, margin: 0, fontFamily: BRAND.font }}>Add new post</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: BRAND.muted, fontSize: 18 }}>✕</button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div><label style={labelStyle}>Type</label><select style={inputStyle} value={form.type} onChange={(e) => setForm(p => ({ ...p, type: e.target.value }))}><option value="image">Image</option><option value="reel">Reel</option><option value="carousel">Carousel</option></select></div>
-            <div><label style={labelStyle}>Status</label><select style={inputStyle} value={form.status} onChange={(e) => setForm(p => ({ ...p, status: e.target.value }))}><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option></select></div>
-          </div>
-          <div><label style={labelStyle}>Headline</label><input style={inputStyle} placeholder="Post headline" value={form.headline} onChange={(e) => setForm(p => ({ ...p, headline: e.target.value }))} /></div>
-          <div><label style={labelStyle}>Caption</label><textarea style={{ ...inputStyle, minHeight: 72, resize: "vertical" }} placeholder="Post caption..." value={form.caption} onChange={(e) => setForm(p => ({ ...p, caption: e.target.value }))} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div><label style={labelStyle}>Date</label><input type="date" style={inputStyle} value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} /></div>
-            <div><label style={labelStyle}>Time</label><input type="time" style={inputStyle} value={form.time} onChange={(e) => setForm(p => ({ ...p, time: e.target.value }))} /></div>
-          </div>
-          <div><label style={labelStyle}>Goal</label><select style={inputStyle} value={form.goal} onChange={(e) => setForm(p => ({ ...p, goal: e.target.value }))}>{GOALS.slice(1).map(g => <option key={g} value={g}>{g}</option>)}</select></div>
-          <div><label style={labelStyle}>Image URL (Canva, ImgBB, Unsplash…)</label><input style={inputStyle} placeholder="https://..." value={form.imageUrl} onChange={(e) => setForm(p => ({ ...p, imageUrl: e.target.value }))} /></div>
-          <div><label style={labelStyle}>Hashtags</label><input style={inputStyle} placeholder="#hashtag #another" value={form.hashtags} onChange={(e) => setForm(p => ({ ...p, hashtags: e.target.value }))} /></div>
-          <button onClick={() => { if (form.headline) { onAdd({ ...form, id: "p" + Date.now(), likes: 0, comments: 0, carouselImages: "", videoUrl: "", notionFiles: [] }); onClose(); } }}
-            style={{ background: BRAND.button, color: BRAND.buttonText, border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: BRAND.font }}>
-            Add to grid
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function GridView({ posts, onPostClick, columns }) {
   const [draggedId, setDraggedId] = useState(null);
@@ -333,7 +299,6 @@ export default function App() {
   const [columns, setColumns] = useState(3);
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -376,7 +341,7 @@ export default function App() {
         <div style={{ padding: 20 }}>
           {activeTab === "grid" && (
             <>
-              {/* Column toggle + Add post */}
+              {/* Column toggle */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>Columns:</span>
@@ -384,20 +349,6 @@ export default function App() {
                     <button key={c} onClick={() => setColumns(c)} style={{ width: 26, height: 26, borderRadius: 5, border: `0.5px solid ${columns === c ? (isDark ? dark.text : BRAND.button) : (isDark ? dark.border : BRAND.border)}`, background: columns === c ? (isDark ? dark.text : BRAND.button) : "transparent", color: columns === c ? (isDark ? dark.bg : BRAND.buttonText) : (isDark ? dark.muted : BRAND.muted), fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font }}>{c}</button>
                   ))}
                 </div>
-                <button onClick={() => setShowAddModal(true)} style={{ background: isDark ? dark.text : BRAND.button, color: isDark ? dark.bg : BRAND.buttonText, border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font }}>+ Add post</button>
-              </div>
-
-              {/* Legend */}
-              <div style={{ display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
-                {[{ label: "Published", color: "#10b981" }, { label: "Scheduled", color: "#93c5fd" }, { label: "Draft", color: "#c9c4be" }].map(({ label, color }) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-                    <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>{label}</span>
-                  </div>
-                ))}
-                <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>▶ Reel</span>
-                <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>⊞ Carousel</span>
-                <div style={{ flex: 1 }} />
                 <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>{posts.length} posts · Drag to rearrange</span>
               </div>
 
@@ -419,7 +370,6 @@ export default function App() {
       </div>
 
       {selectedPost && <PostModal post={selectedPost} onClose={() => setSelectedPost(null)} />}
-      {showAddModal && <AddPostModal onClose={() => setShowAddModal(false)} onAdd={post => setPosts(p => [post, ...p])} />}
     </div>
   );
 }
