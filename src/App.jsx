@@ -260,9 +260,7 @@ function GridView({ posts, onPostClick, columns }) {
 function ContentPlanner({ posts }) {
   const published = posts.filter((p) => p.status === "published");
   const scheduled = posts.filter((p) => p.status === "scheduled");
-  const totalLikes = published.reduce((s, p) => s + p.likes, 0);
-  const totalComments = published.reduce((s, p) => s + p.comments, 0);
-  const avgEngagement = published.length ? Math.round((totalLikes + totalComments) / published.length) : 0;
+  const drafts = posts.filter((p) => p.status === "draft");
   const goalBreakdown = GOALS.slice(1).map((g) => ({ goal: g, count: posts.filter((p) => p.goal === g).length }));
   const maxGoal = Math.max(...goalBreakdown.map((g) => g.count), 1);
   const typeBreakdown = TYPES.slice(1).map((t) => ({ type: t, count: posts.filter((p) => p.type === t).length }));
@@ -278,10 +276,10 @@ function ContentPlanner({ posts }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-        {statCard("Total posts", posts.length, "in database")}
+        {statCard("Total posts", posts.length, "in your database")}
+        {statCard("Drafts", drafts.length, "still to work on")}
         {statCard("Scheduled", scheduled.length, "ready to go")}
-        {statCard("Avg. engagement", avgEngagement.toLocaleString(), "per published post")}
-        {statCard("Total likes", totalLikes.toLocaleString(), `${totalComments.toLocaleString()} comments`)}
+        {statCard("Published", published.length, "already live")}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <div style={{ background: BRAND.card, border: `0.5px solid ${BRAND.border}`, borderRadius: 12, padding: 18 }}>
