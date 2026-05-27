@@ -107,8 +107,8 @@ function MediaDisplay({ post, fullSize = false }) {
     ? post.carouselImages.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
   const isReel = post.type === "reel" && post.videoUrl && !isCanvaUrl(post.videoUrl);
-const isCanvaReel = post.type === "reel" && post.videoUrl && isCanvaUrl(post.videoUrl);
-  const isCarousel = post.type === "carousel" && carouselImages.length > 1;
+  const isCanvaReel = post.type === "reel" && post.videoUrl && isCanvaUrl(post.videoUrl);
+  const isCarousel = (post.type === "carousel" || (post.notionFiles?.length > 1)) && carouselImages.length > 1;
   const isCanva = isCanvaUrl(post.imageUrl);
   const draftFilter = post.status === "draft" ? "grayscale(40%) opacity(0.8)" : "none";
   const togglePlay = () => { if (!videoRef.current) return; if (playing) { videoRef.current.pause(); } else { videoRef.current.play(); } setPlaying(!playing); };
