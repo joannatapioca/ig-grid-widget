@@ -66,7 +66,7 @@ async function fetchNotionPosts() {
     likes: page.properties.Likes?.number || 0,
     comments: page.properties.Comments?.number || 0,
     carouselImages: page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "",
-    videoUrl: page.properties["Reel Video URL"]?.url || "",
+    videoUrl: page.properties["Reel Video URL"]?.url || page.properties["Reel Video URL"]?.files?.[0]?.file?.url || page.properties["Reel Video URL"]?.files?.[0]?.external?.url || "",
   }));
 }
 
