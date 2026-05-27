@@ -60,7 +60,8 @@ async function fetchNotionPosts() {
   return data.results.map((page) => {
     const notionFiles = getNotionFiles(page.properties["Image"]);
     const imageUrl = page.properties["Image URL"]?.url || notionFiles[0] || "";
-    const rawStatus = page.properties.Status?.select?.name || page.properties.Status?.status?.name || "draft";
+    const statusProp = page.properties.Status;
+    const rawStatus = statusProp?.select?.name || statusProp?.status?.name || statusProp?.multi_select?.[0]?.name || "draft";
     const type = page.properties["Post Type"]?.select?.name?.trim()?.toLowerCase() || "image";
     const carouselText = page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "";
     const reelFiles = getNotionFiles(page.properties["Reel Video URL"]);
