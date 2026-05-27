@@ -107,6 +107,7 @@ const isCanvaReel = post.type === "reel" && post.videoUrl && isCanvaUrl(post.vid
   const draftFilter = post.status === "draft" ? "grayscale(40%) opacity(0.8)" : "none";
   const togglePlay = () => { if (!videoRef.current) return; if (playing) { videoRef.current.pause(); } else { videoRef.current.play(); } setPlaying(!playing); };
 
+  if (isCanvaReel) return <CanvaFrame url={post.videoUrl} scale={fullSize ? 0.52 : 0.25} fullSize={fullSize} />;
   if (isReel) return (
     <div style={{ position: "relative", width: "100%", height: "100%", background: "#000" }}>
       <video ref={videoRef} src={post.videoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} loop playsInline onEnded={() => setPlaying(false)} />
