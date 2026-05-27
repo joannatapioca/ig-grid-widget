@@ -2,13 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const GOALS = ["All", "Relatability", "Saveable", "Educational", "Emotional connection", "Product awareness", "Conversion", "Pinterest traffic", "Authority building", "Brand identity", "Shareable"];
 const TYPES = ["All", "image", "reel", "carousel"];
-const STATUSES = ["All", "published", "scheduled", "draft"];
 
-const STATUS_COLORS = {
-  published: { bg: "#d1fae5", text: "#065f46" },
-  scheduled: { bg: "#dbeafe", text: "#1e40af" },
-  draft: { bg: "#ebe8e2", text: "#7a7470" },
-};
 const GOAL_COLORS = {
   Relatability: { bg: "#fef3c7", text: "#92400e" },
   Saveable: { bg: "#ede9fe", text: "#5b21b6" },
@@ -21,7 +15,12 @@ const GOAL_COLORS = {
   "Brand identity": { bg: "#ede9fe", text: "#4c1d95" },
   Shareable: { bg: "#d1fae5", text: "#064e3b" },
 };
-const TYPE_ICONS = { reel: "▶", carousel: "⊞", image: null };
+
+const STATUS_COLORS = {
+  published: { bg: "#d1fae5", text: "#065f46" },
+  scheduled: { bg: "#dbeafe", text: "#1e40af" },
+  draft: { bg: "#ebe8e2", text: "#7a7470" },
+};
 
 const BRAND = {
   bg: "#f9f6f2",
@@ -60,18 +59,16 @@ async function fetchNotionPosts() {
   return data.results.map((page) => {
     const notionFiles = getNotionFiles(page.properties["Image"]);
     const imageUrl = page.properties["Image URL"]?.url || notionFiles[0] || "";
-    const statusProp = page.properties.Status;
-    const rawStatus = statusProp?.select?.name || statusProp?.status?.name || statusProp?.multi_select?.[0]?.name || "draft";
-    const type = page.properties["Post Type"]?.select?.name?.trim()?.toLowerCase() || "image";
-    const carouselText = page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "";
     const reelFiles = getNotionFiles(page.properties["Reel Video URL"]);
     const videoUrl = page.properties["Reel Video URL"]?.url || reelFiles[0] || "";
+    const type = page.properties["Post Type"]?.select?.name?.trim()?.toLowerCase() || "image";
+    const carouselText = page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "";
+    const statusProp = page.properties.Status;
+    const rawStatus = statusProp?.select?.name || statusProp?.status?.name || "draft";
 
     return {
       id: page.id,
       headline: page.properties.Title?.title?.[0]?.plain_text || "Untitled",
-      console.log("POST:", page.properties.Title?.title?.[0]?.plain_text, "STATUS RAW:", JSON.stringify(statusProp));
-      status: rawStatus.trim().toLowerCase(),
       status: rawStatus.trim().toLowerCase(),
       type: notionFiles.length > 1 ? "carousel" : type,
       date: page.properties["Scheduled Date"]?.date?.start?.split("T")[0] || "",
@@ -108,7 +105,7 @@ function MediaDisplay({ post, fullSize = false }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   const carouselImages = post.carouselImages
-    ? (Array.isArray(post.carouselImages) ? post.carouselImages : post.carouselImages.split(",").map(s => s.trim()).filter(Boolean))
+    ? post.carouselImages.split(",").map(s => s.trim()).filter(Boolean)
     : [];
 
   const isCanvaReel = post.type === "reel" && post.videoUrl && isCanvaUrl(post.videoUrl);
@@ -138,23 +135,15 @@ function MediaDisplay({ post, fullSize = false }) {
   if (isCarousel) return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <img src={carouselImages[carouselIndex]} alt={`Slide ${carouselIndex + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      {fullSize && carouselIndex > 0 && (
-        <button onClick={(e) => { e.stopPropagation(); setCarouselIndex(i => i - 1); }} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.92)", border: "none", borderRadius: "50%", width: 32, height: 32, fontSize: 18, cursor: "pointer" }}>‹</button>
-      )}
-      {fullSize && carouselIndex < carouselImages.length - 1 && (
-        <button onClick={(e) => { e.stopPropagation(); setCarouselIndex(i => i + 1); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.92)", border: "none", borderRadius: "50%", width: 32, height: 32, fontSize: 18, cursor: "pointer" }}>›</button>
-      )}
-      {!fullSize && carouselImages.length > 1 && (
-        <div style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 9, padding: "2px 5px", borderRadius: 3, fontFamily: BRAND.font }}>⊞</div>
-      )}
+      {fullSize && carouselIndex > 0 && <button onClick={(e) => { e.stopPropagation(); setCarouselIndex(i => i - 1); }} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.92)", border: "none", borderRadius: "50%", width: 32, height: 32, fontSize: 18, cursor: "pointer" }}>‹</button>}
+      {fullSize && carouselIndex < carouselImages.length - 1 && <button onClick={(e) => { e.stopPropagation(); setCarouselIndex(i => i + 1); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.92)", border: "none", borderRadius: "50%", width: 32, height: 32, fontSize: 18, cursor: "pointer" }}>›</button>}
+      {!fullSize && <div style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 9, padding: "2px 5px", borderRadius: 3 }}>⊞</div>}
       {fullSize && (
         <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5 }}>
-          {carouselImages.map((_, i) => (
-            <div key={i} onClick={(e) => { e.stopPropagation(); setCarouselIndex(i); }} style={{ width: i === carouselIndex ? 18 : 6, height: 6, borderRadius: 3, background: i === carouselIndex ? "#fff" : "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 0.2s" }} />
-          ))}
+          {carouselImages.map((_, i) => <div key={i} onClick={(e) => { e.stopPropagation(); setCarouselIndex(i); }} style={{ width: i === carouselIndex ? 18 : 6, height: 6, borderRadius: 3, background: i === carouselIndex ? "#fff" : "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 0.2s" }} />)}
         </div>
       )}
-      <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 10, fontFamily: BRAND.font }}>⊞ {carouselIndex + 1}/{carouselImages.length}</div>
+      <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 10 }}>⊞ {carouselIndex + 1}/{carouselImages.length}</div>
     </div>
   );
 
@@ -189,11 +178,11 @@ function PostCard({ post, onClick, onDragStart, onDragOver, onDrop }) {
 function PostModal({ post, onClose }) {
   if (!post) return null;
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(44,40,37,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24, fontFamily: BRAND.font }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(44,40,37,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: BRAND.card, borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", border: `0.5px solid ${BRAND.border}` }}>
         <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", borderRadius: "14px 14px 0 0", overflow: "hidden", minHeight: 280 }}>
           <MediaDisplay post={post} fullSize={true} />
-          <button onClick={onClose} style={{ position: "absolute", top: 10, right: 10, background: "rgba(44,40,37,0.6)", border: "none", borderRadius: "50%", width: 28, height: 28, color: "#f5f1ec", fontSize: 14, cursor: "pointer", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: BRAND.font }}>✕</button>
+          <button onClick={onClose} style={{ position: "absolute", top: 10, right: 10, background: "rgba(44,40,37,0.6)", border: "none", borderRadius: "50%", width: 28, height: 28, color: "#f5f1ec", fontSize: 14, cursor: "pointer", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
@@ -240,7 +229,7 @@ function AddPostModal({ onClose, onAdd }) {
           <div><label style={labelStyle}>Image URL (Canva, ImgBB, Unsplash…)</label><input style={inputStyle} placeholder="https://..." value={form.imageUrl} onChange={(e) => setForm(p => ({ ...p, imageUrl: e.target.value }))} /></div>
           <div><label style={labelStyle}>Hashtags</label><input style={inputStyle} placeholder="#hashtag #another" value={form.hashtags} onChange={(e) => setForm(p => ({ ...p, hashtags: e.target.value }))} /></div>
           <button onClick={() => { if (form.headline) { onAdd({ ...form, id: "p" + Date.now(), likes: 0, comments: 0, carouselImages: "", videoUrl: "", notionFiles: [] }); onClose(); } }}
-            style={{ background: BRAND.button, color: BRAND.buttonText, border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: BRAND.font, letterSpacing: "0.03em" }}>
+            style={{ background: BRAND.button, color: BRAND.buttonText, border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: BRAND.font }}>
             Add to grid
           </button>
         </div>
@@ -342,9 +331,6 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [activeTab, setActiveTab] = useState("grid");
   const [columns, setColumns] = useState(3);
-  const [filterGoal, setFilterGoal] = useState("All");
-  const [filterType, setFilterType] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -361,23 +347,14 @@ export default function App() {
   const dark = { bg: "#1c1a18", header: "#232019", surface: "#232019", card: "#2a2723", border: "#3a3632", text: "#f0ebe4", muted: "#7a7470", accent: "#2a2723", accentDark: "#3a3632" };
   const theme = isDark ? dark : BRAND;
 
-  const filteredPosts = posts.filter(p => {
-    if (filterGoal !== "All" && p.goal !== filterGoal) return false;
-    if (filterType !== "All" && p.type !== filterType) return false;
-    if (filterStatus !== "All" && p.status !== filterStatus) return false;
-    return true;
-  });
-
-  const resetFilters = () => { setFilterGoal("All"); setFilterType("All"); setFilterStatus("All"); };
-  const hasActiveFilters = filterGoal !== "All" || filterType !== "All" || filterStatus !== "All";
-
-  const selectStyle = { background: isDark ? dark.accent : BRAND.accent, border: `0.5px solid ${isDark ? dark.border : BRAND.border}`, borderRadius: 6, padding: "5px 9px", color: isDark ? dark.text : BRAND.text, fontSize: 11, fontFamily: BRAND.font, cursor: "pointer" };
   const tabActive = { fontSize: 11, fontWeight: 600, padding: "5px 14px", borderRadius: 6, background: isDark ? dark.card : BRAND.card, color: isDark ? dark.text : BRAND.text, border: `0.5px solid ${isDark ? dark.border : BRAND.border}`, cursor: "pointer", fontFamily: BRAND.font };
   const tabInactive = { fontSize: 11, padding: "5px 14px", color: isDark ? dark.muted : BRAND.muted, background: "transparent", border: "none", cursor: "pointer", fontFamily: BRAND.font };
 
   return (
     <div style={{ background: isDark ? dark.bg : BRAND.bg, minHeight: "100vh", fontFamily: BRAND.font }}>
       <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 40 }}>
+
+        {/* Header */}
         <div style={{ background: isDark ? dark.header : BRAND.header, borderBottom: `0.5px solid ${isDark ? dark.border : BRAND.border}`, padding: "0 20px", position: "sticky", top: 0, zIndex: 50 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 50 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -389,7 +366,7 @@ export default function App() {
                 <button style={activeTab === "grid" ? tabActive : tabInactive} onClick={() => setActiveTab("grid")}>Grid preview</button>
                 <button style={activeTab === "planner" ? tabActive : tabInactive} onClick={() => setActiveTab("planner")}>Planner</button>
               </div>
-              <button onClick={() => setIsDark(d => !d)} style={{ background: isDark ? dark.accentDark : BRAND.accentDark, border: `0.5px solid ${isDark ? dark.border : BRAND.border}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", color: isDark ? dark.muted : BRAND.muted, fontSize: 13, fontFamily: BRAND.font }}>
+              <button onClick={() => setIsDark(d => !d)} style={{ background: isDark ? dark.accentDark : BRAND.accentDark, border: `0.5px solid ${isDark ? dark.border : BRAND.border}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", color: isDark ? dark.muted : BRAND.muted, fontSize: 13 }}>
                 {isDark ? "☀" : "◑"}
               </button>
             </div>
@@ -399,31 +376,18 @@ export default function App() {
         <div style={{ padding: 20 }}>
           {activeTab === "grid" && (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                <select style={selectStyle} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                  {STATUSES.map(s => <option key={s} value={s}>{s === "All" ? "All statuses" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-                </select>
-                <select style={selectStyle} value={filterGoal} onChange={e => setFilterGoal(e.target.value)}>
-                  {GOALS.map(g => <option key={g} value={g}>{g === "All" ? "All goals" : g}</option>)}
-                </select>
-                <select style={selectStyle} value={filterType} onChange={e => setFilterType(e.target.value)}>
-                  {TYPES.map(t => <option key={t} value={t}>{t === "All" ? "All types" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-                </select>
-                {hasActiveFilters && (
-                  <button onClick={resetFilters} style={{ fontSize: 11, color: BRAND.muted, background: "none", border: `0.5px solid ${BRAND.border}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontFamily: BRAND.font }}>
-                    Reset ✕
-                  </button>
-                )}
-                <div style={{ flex: 1 }} />
+              {/* Column toggle + Add post */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>Columns:</span>
                   {[3, 4, 5].map(c => (
                     <button key={c} onClick={() => setColumns(c)} style={{ width: 26, height: 26, borderRadius: 5, border: `0.5px solid ${columns === c ? (isDark ? dark.text : BRAND.button) : (isDark ? dark.border : BRAND.border)}`, background: columns === c ? (isDark ? dark.text : BRAND.button) : "transparent", color: columns === c ? (isDark ? dark.bg : BRAND.buttonText) : (isDark ? dark.muted : BRAND.muted), fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font }}>{c}</button>
                   ))}
                 </div>
-                <button onClick={() => setShowAddModal(true)} style={{ background: isDark ? dark.text : BRAND.button, color: isDark ? dark.bg : BRAND.buttonText, border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font, letterSpacing: "0.02em" }}>+ Add post</button>
+                <button onClick={() => setShowAddModal(true)} style={{ background: isDark ? dark.text : BRAND.button, color: isDark ? dark.bg : BRAND.buttonText, border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font }}>+ Add post</button>
               </div>
 
+              {/* Legend */}
               <div style={{ display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
                 {[{ label: "Published", color: "#10b981" }, { label: "Scheduled", color: "#93c5fd" }, { label: "Draft", color: "#c9c4be" }].map(({ label, color }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -434,31 +398,26 @@ export default function App() {
                 <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>▶ Reel</span>
                 <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>⊞ Carousel</span>
                 <div style={{ flex: 1 }} />
-                <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>{filteredPosts.length} posts · Drag to rearrange</span>
+                <span style={{ fontSize: 11, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>{posts.length} posts · Drag to rearrange</span>
               </div>
 
+              {/* Grid */}
               <div style={{ background: isDark ? dark.surface : BRAND.surface, borderRadius: 10, padding: 2, border: `0.5px solid ${isDark ? dark.border : BRAND.border}` }}>
-                {loading ? (
-                  <div style={{ padding: 60, textAlign: "center", color: isDark ? dark.muted : BRAND.muted, fontSize: 12, fontFamily: BRAND.font }}>Loading your posts…</div>
-                ) : filteredPosts.length === 0 ? (
-                  <div style={{ padding: 60, textAlign: "center" }}>
-                    <p style={{ color: isDark ? dark.muted : BRAND.muted, fontSize: 12, fontFamily: BRAND.font, margin: "0 0 12px" }}>No posts match your filters.</p>
-                    {hasActiveFilters && (
-                      <button onClick={resetFilters} style={{ background: isDark ? dark.text : BRAND.button, color: isDark ? dark.bg : BRAND.buttonText, border: "none", borderRadius: 6, padding: "7px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: BRAND.font }}>Reset filters</button>
-                    )}
-                  </div>
-                ) : (
-                  <GridView posts={filteredPosts} onPostClick={setSelectedPost} columns={columns} />
-                )}
+                {loading
+                  ? <div style={{ padding: 60, textAlign: "center", color: isDark ? dark.muted : BRAND.muted, fontSize: 12, fontFamily: BRAND.font }}>Loading your posts…</div>
+                  : posts.length === 0
+                    ? <div style={{ padding: 60, textAlign: "center", color: isDark ? dark.muted : BRAND.muted, fontSize: 12, fontFamily: BRAND.font }}>No posts found. Add some in Notion!</div>
+                    : <GridView posts={posts} onPostClick={setSelectedPost} columns={columns} />}
               </div>
               <div style={{ marginTop: 10, textAlign: "center" }}>
-                <span style={{ fontSize: 10, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font, letterSpacing: "0.02em" }}>Showing feed as it appears on desktop · Hover to preview · Click to expand</span>
+                <span style={{ fontSize: 10, color: isDark ? dark.muted : BRAND.muted, fontFamily: BRAND.font }}>Showing feed as it appears on desktop · Hover to preview · Click to expand</span>
               </div>
             </>
           )}
           {activeTab === "planner" && <ContentPlanner posts={posts} />}
         </div>
       </div>
+
       {selectedPost && <PostModal post={selectedPost} onClose={() => setSelectedPost(null)} />}
       {showAddModal && <AddPostModal onClose={() => setShowAddModal(false)} onAdd={post => setPosts(p => [post, ...p])} />}
     </div>
