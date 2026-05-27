@@ -70,6 +70,8 @@ async function fetchNotionPosts() {
     return {
       id: page.id,
       headline: page.properties.Title?.title?.[0]?.plain_text || "Untitled",
+      console.log("POST:", page.properties.Title?.title?.[0]?.plain_text, "STATUS RAW:", JSON.stringify(statusProp));
+      status: rawStatus.trim().toLowerCase(),
       status: rawStatus.trim().toLowerCase(),
       type: notionFiles.length > 1 ? "carousel" : type,
       date: page.properties["Scheduled Date"]?.date?.start?.split("T")[0] || "",
