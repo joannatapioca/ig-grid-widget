@@ -100,7 +100,8 @@ function MediaDisplay({ post, fullSize = false }) {
   const [playing, setPlaying] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const carouselImages = post.carouselImages ? post.carouselImages.split(",").map((s) => s.trim()).filter(Boolean) : [];
-  const isReel = post.type === "reel" && post.videoUrl;
+  const isReel = post.type === "reel" && post.videoUrl && !isCanvaUrl(post.videoUrl);
+const isCanvaReel = post.type === "reel" && post.videoUrl && isCanvaUrl(post.videoUrl);
   const isCarousel = post.type === "carousel" && carouselImages.length > 1;
   const isCanva = isCanvaUrl(post.imageUrl);
   const draftFilter = post.status === "draft" ? "grayscale(40%) opacity(0.8)" : "none";
