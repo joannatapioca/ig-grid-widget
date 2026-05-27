@@ -63,6 +63,7 @@ async function fetchNotionPosts() {
     hashtags: page.properties.Hashtags?.rich_text?.[0]?.plain_text || "",
     goal: page.properties.Goal?.select?.name?.trim() || "",
     imageUrl: page.properties["Image URL"]?.url || page.properties["Image"]?.files?.[0]?.file?.url || page.properties["Image"]?.files?.[0]?.external?.url || "",
+    notionFiles: (page.properties["Image"]?.files || []).map(f => f.file?.url || f.external?.url).filter(Boolean),
     likes: page.properties.Likes?.number || 0,
     comments: page.properties.Comments?.number || 0,
     carouselImages: page.properties["Carousel Images"]?.rich_text?.[0]?.plain_text || "",
